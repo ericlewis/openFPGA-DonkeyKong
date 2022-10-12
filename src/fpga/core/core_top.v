@@ -434,184 +434,277 @@ core_bridge_cmd icb (
 
 );
 
+///////////////////////////////////////////////
+// Data
+///////////////////////////////////////////////
 
+reg         ioctl_download = 0;
+wire        ioctl_wr;
+wire [24:0] ioctl_addr;
+wire  [7:0] ioctl_dout;
+reg   [7:0] ioctl_index = 0;
 
-////////////////////////////////////////////////////////////////////////////////////////
+always @(posedge clk_74a) begin
+    if (dataslot_requestwrite)     ioctl_download <= 1;
+    else if (dataslot_allcomplete) ioctl_download <= 0;
+end
 
+data_loader #(
+    .ADDRESS_MASK_UPPER_4(4'h1),
+    .ADDRESS_SIZE(25)
+) rom_loader (
+    .clk_74a(clk_74a),
+    .clk_memory(clk_sys),
 
+    .bridge_wr(bridge_wr),
+    .bridge_endian_little(bridge_endian_little),
+    .bridge_addr(bridge_addr),
+    .bridge_wr_data(bridge_wr_data),
 
-// video generation
-// ~12,288,000 hz pixel clock
-//
-// we want our video mode of 320x240 @ 60hz, this results in 204800 clocks per frame
-// we need to add hblank and vblank times to this, so there will be a nondisplay area. 
-// it can be thought of as a border around the visible area.
-// to make numbers simple, we can have 400 total clocks per line, and 320 visible.
-// dividing 204800 by 400 results in 512 total lines per frame, and 240 visible.
-// this pixel clock is fairly high for the relatively low resolution, but that's fine.
-// PLL output has a minimum output frequency anyway.
+    .write_en(ioctl_wr),
+    .write_addr(ioctl_addr),
+    .write_data(ioctl_dout)
+);
 
+///////////////////////////////////////////////
+// Video
+///////////////////////////////////////////////
+
+wire hblank_core, vblank_core;
+wire hs_core_n, vs_core_n;
+wire [3:0] r, g, b;
+
+reg video_de_reg;
+reg video_hs_reg;
+reg video_vs_reg;
+reg [23:0] video_rgb_reg;
+
+reg hs_prev;
+reg vs_prev;
 
 assign video_rgb_clock = clk_core_12288;
 assign video_rgb_clock_90 = clk_core_12288_90deg;
-assign video_rgb = vidout_rgb;
-assign video_de = vidout_de;
-assign video_skip = vidout_skip;
-assign video_vs = vidout_vs;
-assign video_hs = vidout_hs;
 
-    localparam  VID_V_BPORCH = 'd10;
-    localparam  VID_V_ACTIVE = 'd240;
-    localparam  VID_V_TOTAL = 'd512;
-    localparam  VID_H_BPORCH = 'd10;
-    localparam  VID_H_ACTIVE = 'd320;
-    localparam  VID_H_TOTAL = 'd400;
+assign video_de = video_de_reg;
+assign video_hs = video_hs_reg;
+assign video_vs = video_vs_reg;
+assign video_rgb = video_rgb_reg;
+assign video_skip = 0;
 
-    reg [15:0]  frame_count;
-    
-    reg [9:0]   x_count;
-    reg [9:0]   y_count;
-    
-    wire [9:0]  visible_x = x_count - VID_H_BPORCH;
-    wire [9:0]  visible_y = y_count - VID_V_BPORCH;
+always @(posedge clk_core_12288) begin
+    video_de_reg <= 0;
 
-    reg [23:0]  vidout_rgb;
-    reg         vidout_de, vidout_de_1;
-    reg         vidout_skip;
-    reg         vidout_vs;
-    reg         vidout_hs, vidout_hs_1;
-    
-    reg [9:0]   square_x = 'd135;
-    reg [9:0]   square_y = 'd95;
-
-always @(posedge clk_core_12288 or negedge reset_n) begin
-
-    if(~reset_n) begin
-    
-        x_count <= 0;
-        y_count <= 0;
-        
-    end else begin
-        vidout_de <= 0;
-        vidout_skip <= 0;
-        vidout_vs <= 0;
-        vidout_hs <= 0;
-        
-        vidout_hs_1 <= vidout_hs;
-        vidout_de_1 <= vidout_de;
-        
-        // x and y counters
-        x_count <= x_count + 1'b1;
-        if(x_count == VID_H_TOTAL-1) begin
-            x_count <= 0;
-            
-            y_count <= y_count + 1'b1;
-            if(y_count == VID_V_TOTAL-1) begin
-                y_count <= 0;
-            end
-        end
-        
-        // generate sync 
-        if(x_count == 0 && y_count == 0) begin
-            // sync signal in back porch
-            // new frame
-            vidout_vs <= 1;
-            frame_count <= frame_count + 1'b1;
-        end
-        
-        // we want HS to occur a bit after VS, not on the same cycle
-        if(x_count == 3) begin
-            // sync signal in back porch
-            // new line
-            vidout_hs <= 1;
-        end
-
-        // inactive screen areas are black
-        vidout_rgb <= 24'h0;
-        // generate active video
-        if(x_count >= VID_H_BPORCH && x_count < VID_H_ACTIVE+VID_H_BPORCH) begin
-
-            if(y_count >= VID_V_BPORCH && y_count < VID_V_ACTIVE+VID_V_BPORCH) begin
-                // data enable. this is the active region of the line
-                vidout_de <= 1;
-                
-                vidout_rgb[23:16] <= 8'd60;
-                vidout_rgb[15:8]  <= 8'd60;
-                vidout_rgb[7:0]   <= 8'd60;
-                
-            end 
-        end
+    if (~(vblank_core || hblank_core)) begin
+        video_de_reg <= 1;
+        video_rgb_reg[23:16] <= {2{r}};
+        video_rgb_reg[15:8]  <= {2{g}};
+        video_rgb_reg[7:0]   <= {2{b}};
     end
+
+    video_hs_reg <= ~hs_prev && ~hs_core_n;
+    video_vs_reg <= ~vs_prev && ~vs_core_n;
+    hs_prev <= ~hs_core_n;
+    vs_prev <= ~vs_core_n;
 end
 
+assign hblank_core = hbl[8];
 
-
-
-//
-// audio i2s silence generator
-// see other examples for actual audio generation
-//
-
-assign audio_mclk = audgen_mclk;
-assign audio_dac = audgen_dac;
-assign audio_lrck = audgen_lrck;
-
-// generate MCLK = 12.288mhz with fractional accumulator
-    reg         [21:0]  audgen_accum;
-    reg                 audgen_mclk;
-    parameter   [20:0]  CYCLE_48KHZ = 21'd122880 * 2;
-always @(posedge clk_74a) begin
-    audgen_accum <= audgen_accum + CYCLE_48KHZ;
-    if(audgen_accum >= 21'd742500) begin
-        audgen_mclk <= ~audgen_mclk;
-        audgen_accum <= audgen_accum - 21'd742500 + CYCLE_48KHZ;
-    end
+wire clk_pix;
+wire hbl0;
+reg [8:0] hbl;
+always @(posedge clk_sys) begin
+	reg old_pix;
+	old_pix <= clk_pix;
+	if(~old_pix & clk_pix) begin
+		hbl <= (hbl<<1)|hbl0;
+	end
 end
-
-// generate SCLK = 3.072mhz by dividing MCLK by 4
-    reg [1:0]   aud_mclk_divider;
-    wire        audgen_sclk = aud_mclk_divider[1] /* synthesis keep*/;
-    reg         audgen_lrck_1;
-always @(posedge audgen_mclk) begin
-    aud_mclk_divider <= aud_mclk_divider + 1'b1;
-end
-
-// shift out audio data as I2S 
-// 32 total bits per channel, but only 16 active bits at the start and then 16 dummy bits
-//
-    reg     [4:0]   audgen_lrck_cnt;    
-    reg             audgen_lrck;
-    reg             audgen_dac;
-always @(negedge audgen_sclk) begin
-    audgen_dac <= 1'b0;
-    // 48khz * 64
-    audgen_lrck_cnt <= audgen_lrck_cnt + 1'b1;
-    if(audgen_lrck_cnt == 31) begin
-        // switch channels
-        audgen_lrck <= ~audgen_lrck;
-        
-    end 
-end
-
 
 ///////////////////////////////////////////////
+// Audio
+///////////////////////////////////////////////
 
+wire [15:0] audio;
 
-    wire    clk_core_12288;
-    wire    clk_core_12288_90deg;
+sound_i2s #(
+    .CHANNEL_WIDTH(16),
+    .SIGNED_INPUT (0)
+) sound_i2s (
+    .clk_74a(clk_74a),
+    .clk_audio(clk_sys),
     
-    wire    pll_core_locked;
+    .audio_l(audio),
+    .audio_r(audio),
+
+    .audio_mclk(audio_mclk),
+    .audio_lrck(audio_lrck),
+    .audio_dac(audio_dac)
+);
+
+///////////////////////////////////////////////
+// Control
+///////////////////////////////////////////////
+
+wire [15:0] joy;
+
+synch_3 #(
+    .WIDTH(16)
+) cont1_key_s (
+    cont1_key,
+    joy,
+    clk_sys
+);
+
+wire m_up_2     = joy[3];
+wire m_down_2   = joy[2];
+wire m_left_2   = joy[1];
+wire m_right_2  = joy[0];
+wire m_fire_2   = joy[4];
+
+wire m_up     = joy[3];
+wire m_down   = joy[2];
+wire m_left   = joy[1];
+wire m_right  = joy[0];
+wire m_fire   = joy[4];
+
+wire m_start1 =  joy[5];
+wire m_start2 =  joy[6];
+wire m_coin   =  joy[7];
+wire m_pause   = joy[8];
+
+///////////////////////////////////////////////
+// Instance
+///////////////////////////////////////////////
+
+reg mod_dk = 0; // unused
+reg mod_dkjr = 0;
+reg mod_dk3 = 0;
+reg mod_radarscope = 0;
+reg mod_pestplace = 0;
+
+wire reset = ~reset_n | ioctl_download;
+
+wire [15:0] main_rom_a;
+wire [7:0] main_rom_do;
+wire [11:0] sub_rom_a;
+wire [7:0] sub_rom_do;
+wire [18:0] wav_rom_a;
+wire [7:0] wav_rom_do;
+
+dpram #(15,8) cpu_rom (
+	.clock_a(clk_sys),
+	.address_a(main_rom_a[14:0]),
+	.q_a(main_rom_do),
+
+	.clock_b(clk_sys),
+	.address_b(ioctl_addr[14:0]),
+	.wren_b(ioctl_wr && ioctl_download && (ioctl_addr < 'd32768) && !ioctl_index),
+	.data_b(ioctl_dout)
+);
+
+dpram #(12,8) snd_rom (
+	.clock_a(clk_sys),
+	.address_a(sub_rom_a[11:0]),
+	.q_a(sub_rom_do),
+
+	.clock_b(clk_sys),
+	.address_b(ioctl_addr[11:0]),
+	.wren_b(ioctl_wr && ioctl_download && (ioctl_addr < 'hF000 && ioctl_addr >= 'hE000) && !ioctl_index),
+	.data_b(ioctl_dout)
+);
+
+dpram #(16,8) wav_rom (
+    .clock_a(clk_sys),
+    .address_a(wav_rom_a[15:0]),
+    .q_a(wav_rom_do),
+
+    .clock_b(clk_sys),
+    .address_b(ioctl_addr[15:0]),
+    .wren_b(ioctl_wr && ioctl_download && (ioctl_addr >= 'hFF00) && !ioctl_index),
+    .data_b(ioctl_dout)
+);
+
+dkong_top dkong(				   
+    .I_CLK_24576M(clk_sys),
+    .I_RESETn(~reset),
+    .I_U1(~m_up),
+    .I_D1(~m_down),
+    .I_L1(~m_left),
+    .I_R1(~m_right),
+    .I_J1(~m_fire),
+
+    .I_U2(~m_up_2),
+    .I_D2(~m_down_2),
+    .I_L2(~m_left_2),
+    .I_R2(~m_right_2),
+    .I_J2(~m_fire_2),
+
+    .I_S1(~m_start1),
+    .I_S2(~m_start2),
+    .I_C1(~m_coin),
+
+    .I_DIP_SW(0),
+
+    .I_DKJR(mod_dkjr|mod_pestplace|mod_dk3),
+    .I_DK3B(mod_dk3),
+    .I_RADARSCP(mod_radarscope),
+    .I_PESTPLCE(mod_pestplace),
+
+    .O_PIX(clk_pix),
+
+    .flip_screen(0),
+    .H_OFFSET(0),
+    .V_OFFSET(0),
+
+    .O_SOUND_DAT(audio),
+    .O_VGA_R(r),
+    .O_VGA_G(g),
+    .O_VGA_B(b),
+    .O_H_BLANK(hbl0),
+    .O_V_BLANK(vblank_core),
+    .O_VGA_H_SYNCn(hs_core_n),
+    .O_VGA_V_SYNCn(vs_core_n),
+
+    .DL_ADDR(ioctl_addr[15:0]),
+    .DL_WR(ioctl_wr && ioctl_addr[23:16] == 0 && !ioctl_index),
+    .DL_DATA(ioctl_dout),
+    .MAIN_CPU_A(main_rom_a),
+    .MAIN_CPU_DO(main_rom_do),
+    .SND_ROM_A(sub_rom_a),
+    .SND_ROM_DO(sub_rom_do),
+    .WAV_ROM_A(wav_rom_a),
+    .WAV_ROM_DO(wav_rom_do),
+
+    // .paused(pause_cpu),
+
+    // .hs_address(hs_address),
+    // .hs_data_in(hs_data_in),
+    // .hs_data_out(hs_data_out),
+    // .hs_write(hs_write_enable),
+    // .hs_access(hs_access_read|hs_access_write)
+);
+
+///////////////////////////////////////////////
+// Clocks
+///////////////////////////////////////////////
+
+wire    clk_core_12288;
+wire    clk_core_12288_90deg;
+wire    clk_sys;
+
+assign clk_sys = clk_core_12288;
+
+wire    pll_core_locked;
     
 mf_pllbase mp1 (
     .refclk         ( clk_74a ),
     .rst            ( 0 ),
-    
+
     .outclk_0       ( clk_core_12288 ),
     .outclk_1       ( clk_core_12288_90deg ),
-    
+
     .locked         ( pll_core_locked )
 );
-
 
     
 endmodule

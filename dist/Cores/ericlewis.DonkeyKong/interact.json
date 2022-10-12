@@ -1,7 +1,23 @@
 {
     "interact": {
         "magic": "APF_VER_1",
-        "variables": [],
+        "variables": [
+            {
+                "type": "default",
+                "mappings": [
+                  {
+                    "id": 1,
+                    "name": "Insert coin",
+                    "key": "pad_btn_select"
+                  },
+                  {
+                    "id": 2,
+                    "name": "Start Game",
+                    "key": "pad_btn_start"
+                  }
+                ]
+            }
+        ],
         "messages": []
     }
 }

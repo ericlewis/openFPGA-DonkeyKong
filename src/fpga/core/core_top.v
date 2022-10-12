@@ -438,6 +438,14 @@ core_bridge_cmd icb (
 );
 
 ///////////////////////////////////////////////
+// System
+///////////////////////////////////////////////
+
+wire osnotify_inmenu_s;
+
+synch_3 OSD_S (osnotify_inmenu, osnotify_inmenu_s, clk_sys);
+
+///////////////////////////////////////////////
 // ROM
 ///////////////////////////////////////////////
 
@@ -493,7 +501,7 @@ wire        hs_configured;
 pause #(4,4,4,25) pause (
   .clk_sys(clk_sys),
   .reset(~reset_n),
-  .OSD_STATUS(osnotify_inmenu),
+  .OSD_STATUS(osnotify_inmenu_s),
   .pause_cpu(pause_cpu)
 );
 
@@ -515,7 +523,7 @@ hiscore #(
     .ioctl_addr(ioctl_addr),
     .ioctl_index(ioctl_index),
 
-    .OSD_STATUS(osnotify_inmenu),
+    .OSD_STATUS(osnotify_inmenu_s),
 
 	.data_from_hps(ioctl_dout),
     .data_from_ram(hs_data_out),

@@ -7,6 +7,7 @@ Analogue Pocket port of Donkey Kong.
 * High Score saving doesn't work.
 * No dips.
 * Doesn't support Pest Place or Radar Scope.
+* Or Donkey Kong, Jr.
 
 ## Attribution
 

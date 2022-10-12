@@ -482,8 +482,8 @@ reg [23:0] video_rgb_reg;
 reg hs_prev;
 reg vs_prev;
 
-assign video_rgb_clock = clk_core_12288;
-assign video_rgb_clock_90 = clk_core_12288_90deg;
+assign video_rgb_clock = clk_core_6_1436;
+assign video_rgb_clock_90 = clk_core_6_1436_90deg;
 
 assign video_de = video_de_reg;
 assign video_hs = video_hs_reg;
@@ -491,7 +491,7 @@ assign video_vs = video_vs_reg;
 assign video_rgb = video_rgb_reg;
 assign video_skip = 0;
 
-always @(posedge clk_core_12288) begin
+always @(posedge clk_core_6_1436) begin
     video_de_reg <= 0;
 
     if (~(vblank_core || hblank_core)) begin
@@ -697,8 +697,8 @@ dkong_top dkong(
 // Clocks
 ///////////////////////////////////////////////
 
-wire    clk_core_12288;
-wire    clk_core_12288_90deg;
+wire    clk_core_6_1436;
+wire    clk_core_6_1436_90deg;
 wire    clk_sys;
 
 wire    pll_core_locked;
@@ -707,8 +707,8 @@ mf_pllbase mp1 (
     .refclk         ( clk_74a ),
     .rst            ( 0 ),
 
-    .outclk_0       ( clk_core_12288 ),
-    .outclk_1       ( clk_core_12288_90deg ),
+    .outclk_0       ( clk_core_6_1436 ),
+    .outclk_1       ( clk_core_6_1436_90deg ),
     .outclk_2       ( clk_sys ),
 
     .locked         ( pll_core_locked )

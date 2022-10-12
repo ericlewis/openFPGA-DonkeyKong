@@ -323,6 +323,9 @@ always @(*) begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
     endcase
+    if (bridge_addr[31:28] == 4'h2) begin
+      bridge_rd_data <= sd_read_data;
+    end
 end
 
 
@@ -435,7 +438,7 @@ core_bridge_cmd icb (
 );
 
 ///////////////////////////////////////////////
-// Data
+// ROM
 ///////////////////////////////////////////////
 
 reg         ioctl_download = 0;
@@ -464,6 +467,87 @@ data_loader #(
     .write_en(ioctl_wr),
     .write_addr(ioctl_addr),
     .write_data(ioctl_dout)
+);
+
+///////////////////////////////////////////////
+// High Score
+///////////////////////////////////////////////
+
+wire [31:0] sd_read_data;
+
+wire sd_rd;
+wire sd_wr;
+
+wire [15:0] sd_buff_addr_out;
+wire [7:0]  sd_buff_din;
+
+wire [15:0] hs_address;
+wire  [7:0] hs_data_in;
+wire  [7:0] hs_data_out;
+wire        hs_write_enable;
+wire        hs_access_read;
+wire        hs_access_write;
+wire        hs_pause;
+wire        hs_configured;
+
+pause #(4,4,4,25) pause (
+  .clk_sys(clk_sys),
+  .reset(~reset_n),
+  .OSD_STATUS(osnotify_inmenu),
+  .pause_cpu(pause_cpu)
+);
+
+hiscore #(
+	.HS_ADDRESSWIDTH(16),
+	.HS_SCOREWIDTH(8),			// 241 bytes
+	.CFG_ADDRESSWIDTH(4),		// 8 entries
+	.CFG_LENGTHWIDTH(2)
+) hi (
+	.clk(clk_sys),
+	.paused(pause_cpu),
+    .reset(~reset_n),
+	.autosave(1),
+
+    .ioctl_upload(sd_rd),
+    .ioctl_upload_req(sd_wr),
+    .ioctl_download(ioctl_download),
+    .ioctl_wr(ioctl_wr),
+    .ioctl_addr(ioctl_addr),
+    .ioctl_index(ioctl_index),
+
+    .OSD_STATUS(osnotify_inmenu),
+
+	.data_from_hps(ioctl_dout),
+    .data_from_ram(hs_data_out),
+
+	.ram_address(hs_address),
+
+	.data_to_hps(sd_buff_din),
+    .data_to_ram(hs_data_in),
+
+	.ram_write(hs_write_enable),
+	.ram_intent_read(hs_access_read),
+	.ram_intent_write(hs_access_write),
+
+	.pause_cpu(hs_pause),
+	.configured(hs_configured),
+);
+
+data_unloader #(
+	.ADDRESS_MASK_UPPER_4(4'h2),
+	.ADDRESS_SIZE(16)
+) save_data_unloader (
+	.clk_74a(clk_74a),
+	.clk_memory(clk_sys),
+
+	.bridge_rd(bridge_rd),
+	.bridge_endian_little(bridge_endian_little),
+	.bridge_addr(bridge_addr),
+	.bridge_rd_data(sd_read_data),
+
+	.read_en  (sd_rd),
+	.read_addr(sd_buff_addr_out),
+	.read_data(sd_buff_din)
 );
 
 ///////////////////////////////////////////////
@@ -585,6 +669,8 @@ wire m_pause   = joy[8] | joy2[8];
 // Instance
 ///////////////////////////////////////////////
 
+wire pause_cpu;
+
 reg mod_dk = 0; // unused
 reg mod_dkjr = 0;
 reg mod_dk3 = 0;
@@ -684,13 +770,13 @@ dkong_top dkong(
     .WAV_ROM_A(wav_rom_a),
     .WAV_ROM_DO(wav_rom_do),
 
-    // .paused(pause_cpu),
+    .paused(pause_cpu),
 
-    // .hs_address(hs_address),
-    // .hs_data_in(hs_data_in),
-    // .hs_data_out(hs_data_out),
-    // .hs_write(hs_write_enable),
-    // .hs_access(hs_access_read|hs_access_write)
+    .hs_address(hs_address),
+    .hs_data_in(hs_data_in),
+    .hs_data_out(hs_data_out),
+    .hs_write(hs_write_enable),
+    .hs_access(hs_access_read|hs_access_write)
 );
 
 ///////////////////////////////////////////////

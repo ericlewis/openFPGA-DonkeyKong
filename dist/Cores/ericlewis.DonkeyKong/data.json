@@ -6,9 +6,18 @@
                 "id": 0,
                 "name": "ROM",
                 "required": true,
-                "parameters": "0x109",
+                "parameters": 0,
                 "filename": "dkong.rom",
                 "address": "0x10000000"
+            },
+            {
+                "id": 10,
+                "name": "HISCORE",
+                "required": false,
+                "nonvolatile": true,
+                "parameters": "0x84",
+                "extensions": ["sav"],
+                "address": "0x20000000"
             }
         ]
     }

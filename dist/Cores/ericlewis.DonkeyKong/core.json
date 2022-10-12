@@ -4,10 +4,10 @@
         "metadata": {
             "platform_ids": ["donkeykong"],
             "shortname": "DonkeyKong",
-            "description": "TODO",
+            "description": "Nintendo's Donkey Kong released in 1981.",
             "author": "ericlewis",
             "url": "https://github.com/ericlewis/openFPGA-DonkeyKong",
-            "version": "1.0.0",
+            "version": "0.0.1",
             "date_release": "2022-10-12"
         },
         "framework": {

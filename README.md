@@ -1,5 +1,23 @@
-# Core Template
-This is a template repository for a core which contains all of the core definition JSON files and FPGA starter code.
+# Donkey Kong
 
-## Legal
-Analogue’s Development program was created to further video game hardware preservation with FPGA technology. Analogue Developers have access to Analogue Pocket I/O’s so Developers can utilize cartridge adapters or interface with other pieces of original or bespoke hardware to support legacy media. Analogue does not support or endorse the unauthorized use or distribution of material protected by copyright or other intellectual property rights.
+Analogue Pocket port of Donkey Kong.
+
+## Known Issues
+
+* High Score saving doesn't work.
+* No dips.
+* Doesn't support Pest Place or Radar Scope.
+
+## Attribution
+
+---------------------------------------------------------------------------------
+-- 
+-- Arcade: Donkey Kong port to MiSTer by Sorgelig
+-- 18 April 2018
+-- 
+---------------------------------------------------------------------------------
+-- 
+-- dkong Copyright (c) 2003 - 2004 Katsumi Degawa
+-- T80   Copyright (c) 2001-2002 Daniel Wallner (jesus@opencores.org) All rights reserved
+-- T48   Copyright (c) 2004, Arnim Laeuger (arniml@opencores.org) All rights reserved
+-- 

@@ -22,3 +22,7 @@ Analogue Pocket port of Donkey Kong.
 -- T80   Copyright (c) 2001-2002 Daniel Wallner (jesus@opencores.org) All rights reserved
 -- T48   Copyright (c) 2004, Arnim Laeuger (arniml@opencores.org) All rights reserved
 -- 
+
+## ROM Instructions
+
+ROM files are not included, you must use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to convert to a singular `dkong.rom` file, then place the ROM file in `/Assets/donkeykong/common`.

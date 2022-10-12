@@ -11,6 +11,7 @@ Analogue Pocket port of Donkey Kong.
 
 ## Attribution
 
+```
 ---------------------------------------------------------------------------------
 -- 
 -- Arcade: Donkey Kong port to MiSTer by Sorgelig
@@ -22,6 +23,7 @@ Analogue Pocket port of Donkey Kong.
 -- T80   Copyright (c) 2001-2002 Daniel Wallner (jesus@opencores.org) All rights reserved
 -- T48   Copyright (c) 2004, Arnim Laeuger (arniml@opencores.org) All rights reserved
 -- 
+```
 
 ## ROM Instructions
 

@@ -1,8 +1,8 @@
 {
   "platform": {
-    "category": "Example Cores",
-    "name": "Example Platform",
-    "year": 2022,
-    "manufacturer": "Example Manufacturer"
+    "category": "Arcade",
+    "name": "Donkey Kong",
+    "year": 1981,
+    "manufacturer": "Nintendo"
   }
 }

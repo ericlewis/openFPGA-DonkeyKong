@@ -51,6 +51,7 @@ input   wire    [31:0]  savestate_size,
 input   wire    [31:0]  savestate_maxloadsize,
 
 output  reg             osnotify_inmenu,
+output  reg     [31:0]  osnotify_rtc,
 
 output  reg             savestate_start,        // core should detect rising edge on this,
 input   wire            savestate_start_ack,    // and then assert ack for at least 1 cycle
@@ -166,6 +167,7 @@ initial begin
     savestate_start <= 0;
     savestate_load <= 0;
     osnotify_inmenu <= 0;
+    osnotify_rtc <= 0;
     status_setup_done_queue <= 0;
 end
     
@@ -372,6 +374,11 @@ always @(posedge clk) begin
         16'h00B0: begin
             // OS Notify: Menu State
             osnotify_inmenu <= host_20[0];
+            hstate <= ST_DONE_OK;
+        end
+        16'h0090: begin
+            // OS Notify: RTC State
+            osnotify_rtc <= host_20;
             hstate <= ST_DONE_OK;
         end
         default: begin

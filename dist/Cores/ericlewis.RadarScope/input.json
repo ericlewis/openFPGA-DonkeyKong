@@ -1,0 +1,27 @@
+{
+    "input": {
+        "magic": "APF_VER_1",
+        "controllers": [
+            {
+                "type": "default",
+                "mappings": [
+                  {
+                    "id": 0,
+                    "name": "Fire",
+                    "key": "pad_btn_a"
+                  },
+                  {
+                    "id": 1,
+                    "name": "Insert coin",
+                    "key": "pad_btn_select"
+                  },
+                  {
+                    "id": 2,
+                    "name": "Start Game",
+                    "key": "pad_btn_start"
+                  }
+                ]
+            }
+        ]
+    }
+}

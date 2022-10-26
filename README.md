@@ -1,12 +1,12 @@
-# Donkey Kong
+# Radar Scope
 
-Analogue Pocket port of Donkey Kong.
+Analogue Pocket port of Radar Scope.
 
 ## Known Issues
 
 * High Score saving doesn't work.
 * No dips.
-* Doesn't support Pest Place or Radar Scope.
+* Doesn't support Pest Place.
 * Or Donkey Kong, Jr.
 
 ## Attribution
@@ -27,4 +27,4 @@ Analogue Pocket port of Donkey Kong.
 
 ## ROM Instructions
 
-ROM files are not included, you must use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to convert to a singular `dkong.rom` file, then place the ROM file in `/Assets/donkeykong/common`.
+ROM files are not included, you must use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to convert to a singular `radarscp.rom` file, then place the ROM file in `/Assets/radarscope/common`.

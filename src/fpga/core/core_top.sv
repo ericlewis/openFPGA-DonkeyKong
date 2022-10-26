@@ -366,6 +366,7 @@ end
     wire            savestate_load_err;
     
     wire            osnotify_inmenu;
+    wire    [31:0]  osnotify_rtc;
 
 // bridge target commands
 // synchronous to clk_74a
@@ -424,6 +425,7 @@ core_bridge_cmd icb (
     .savestate_load_err     ( savestate_load_err ),
 
     .osnotify_inmenu        ( osnotify_inmenu ),
+    .osnotify_rtc           ( osnotify_rtc ),
     
     .datatable_addr         ( datatable_addr ),
     .datatable_wren         ( datatable_wren ),
@@ -725,7 +727,7 @@ wire pause_cpu;
 reg mod_dk = 0; // unused
 reg mod_dkjr = 0;
 reg mod_dk3 = 0;
-reg mod_radarscope = 0;
+reg mod_radarscope = 1;
 reg mod_pestplace = 0;
 
 wire reset = ~reset_n | ioctl_download;

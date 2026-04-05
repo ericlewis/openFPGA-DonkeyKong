@@ -1,23 +1,135 @@
 {
-    "interact": {
-        "magic": "APF_VER_1",
-        "variables": [
-            {
-                "type": "default",
-                "mappings": [
-                  {
-                    "id": 1,
-                    "name": "Insert coin",
-                    "key": "pad_btn_select"
-                  },
-                  {
-                    "id": 2,
-                    "name": "Start Game",
-                    "key": "pad_btn_start"
-                  }
-                ]
-            }
+  "interact": {
+    "magic": "APF_VER_1",
+    "variables": [
+      {
+        "id": "0x00",
+        "name": "Lives",
+        "type": "list",
+        "address": "0x50000000",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "3" },
+          { "value": "0x01", "name": "4" },
+          { "value": "0x02", "name": "5" },
+          { "value": "0x03", "name": "6" }
         ],
-        "messages": []
-    }
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x01",
+        "name": "Bonus Life",
+        "type": "list",
+        "address": "0x50000004",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "7K / 10K" },
+          { "value": "0x01", "name": "10K / 15K" },
+          { "value": "0x02", "name": "15K / 20K" },
+          { "value": "0x03", "name": "20K / 25K" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x02",
+        "name": "Coins",
+        "type": "list",
+        "address": "0x50000008",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "1C 1P" },
+          { "value": "0x01", "name": "2C 1P" },
+          { "value": "0x02", "name": "1C 1P" },
+          { "value": "0x03", "name": "3C 1P" },
+          { "value": "0x04", "name": "1C 1P" },
+          { "value": "0x05", "name": "4C 1P" },
+          { "value": "0x06", "name": "1C 1P" },
+          { "value": "0x07", "name": "5C 1P" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x03",
+        "name": "Cabinet",
+        "type": "list",
+        "address": "0x5000000C",
+        "defaultval": "0x01",
+        "options": [
+          { "value": "0x00", "name": "Cocktail" },
+          { "value": "0x01", "name": "Upright" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x04",
+        "name": "Flip Screen",
+        "type": "list",
+        "address": "0x50000010",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "Off" },
+          { "value": "0x01", "name": "On" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x05",
+        "name": "Sound Effects",
+        "type": "list",
+        "address": "0x50000014",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "Sampled" },
+          { "value": "0x01", "name": "Emulated" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x06",
+        "name": "Autosave HiScores",
+        "type": "list",
+        "address": "0x50000018",
+        "defaultval": "0x01",
+        "options": [
+          { "value": "0x00", "name": "Off" },
+          { "value": "0x01", "name": "On" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x07",
+        "name": "Pause In OSD",
+        "type": "list",
+        "address": "0x5000001C",
+        "defaultval": "0x01",
+        "options": [
+          { "value": "0x00", "name": "Off" },
+          { "value": "0x01", "name": "On" }
+        ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x08",
+        "name": "Dim Video",
+        "type": "list",
+        "address": "0x50000020",
+        "defaultval": "0x01",
+        "options": [
+          { "value": "0x00", "name": "Off" },
+          { "value": "0x01", "name": "On" }
+        ],
+        "enabled": true,
+        "persist": true
+      }
+    ],
+    "messages": []
+  }
 }

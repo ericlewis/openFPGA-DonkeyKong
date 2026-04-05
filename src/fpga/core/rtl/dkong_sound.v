@@ -1,22 +1,22 @@
 //===============================================================================
 // FPGA DONKEY KONG SOUND_I/F
 //
-// Version : 4.00 
+// Version : 4.00
 //
 // Copyright(c) 2003 - 2004 Katsumi Degawa , All rights reserved
 //
 // Important !
 //
-// This program is freeware for non-commercial use. 
+// This program is freeware for non-commercial use.
 // An author does no guarantee about this program.
 // You can use this under your own risk.
 //
 // 2004- 9- 2 T48-IP(beta3) was include.  K.Degawa
 // 2004- 9-14 T48-IP was changed to beta4.  K.Degawa
 // 2005- 2- 9 The description of the ROM was changed.
-//            Data on the ROM are initialized at the time of the start.   
+//            Data on the ROM are initialized at the time of the start.
 //================================================================================
- 
+
 module dkong_sound(
 	input   I_CLK,
 	input   I_RST,
@@ -67,7 +67,7 @@ assign  ROM_A = {I_DKJR ? I8035_PBI[3] : I8035_PSENn,S_ROM_A};
 reg     S_D1_CS;
 always@(posedge I_CLK) S_D1_CS <= (I_DKJR | I8035_PBI[6])&(~I8035_RDn);
 
-wire    [7:0]S_D1 = S_D1_CS ? {3'h0,~I_SOUND_DAT[4:0]}: 8'h00 ; 
+wire    [7:0]S_D1 = S_D1_CS ? {3'h0,~I_SOUND_DAT[4:0]}: 8'h00 ;
 
 wire    [7:0]S_PROG_DB;
 wire    [7:0]S_PROG_D  = I8035_PSENn ? 8'h00 : S_PROG_DB ;
@@ -101,7 +101,7 @@ reg     [7:0]DO;
 always@(posedge I_CLK) DO <= I8035_DO;
 assign  I8035_DBO = DO;
 
-//----    DAC  I/F     ------------------------  
+//----    DAC  I/F     ------------------------
 assign  O_SOUND_DAT = I8035_PAI;
 
 

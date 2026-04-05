@@ -1,7 +1,10 @@
-module dkong_soundboard(
+module dkong_soundboard #(
+	W_CLK_24576M_RATE = 24576000 // Hz
+) (
 	input         W_CLK_24576M,
 	input         W_RESETn,
-	input         I_DKJR,
+	input         use_emulated_sfx,
+	input         I_DKJR,   /// 1 = Emulate Donkey Kong JR, 3 or PestPlace (async not a problem)
 	input         W_W0_WE,
 	input         W_W1_WE,
 	input         W_CNF_EN,
@@ -9,7 +12,7 @@ module dkong_soundboard(
 	input         W_5H_Q0,
 	input   [1:0] W_4H_Q,
 	input   [4:0] W_3D_Q,
-	output [15:0] O_SOUND_DAT,
+	output reg [15:0] O_SOUND_DAT,
 	output        O_SACK,
 	output [11:0] ROM_A,
 	input   [7:0] ROM_D,
@@ -33,11 +36,17 @@ wire    I8035_T0;
 wire    I8035_T1;
 wire    I8035_RSTn;
 
-reg [1:0] cnt;
+// emulate 6 MHz crystal oscillor
+localparam increment_width = 17; // increment_width = ceil(RATE_decimal_precision * 3.32192)
+reg [increment_width:0] count; // one longer for overflow bit.
+localparam int fraction_mutliplier = (1<<<increment_width);
+// This somehow refuses to work:
+localparam I8035_CLK_FRACTION = 6000000.0 / W_CLK_24576M_RATE;
+
 always @(posedge W_CLK_24576M) begin
-	cnt <= cnt + 1'd1;
-	I8035_CLK_EN <= cnt == 0;
+	count <= {1'b0, count[increment_width - 1:0]} + (increment_width + 1)'(fraction_mutliplier * I8035_CLK_FRACTION);
 end
+assign I8035_CLK_EN = count[increment_width];
 
 I8035IP SOUND_CPU
 (
@@ -73,7 +82,7 @@ dkong_sound Digtal_sound
 	.I8035_DBO(I8035_DBO),
 	.I8035_PAI(I8035_PAI),
 	.I8035_PBI(I8035_PBI),
-	.I8035_PBO(I8035_PBO), 
+	.I8035_PBO(I8035_PBO),
 	.I8035_ALE(I8035_ALE),
 	.I8035_RDn(I8035_RDn),
 	.I8035_PSENn(I8035_PSENn),
@@ -88,41 +97,90 @@ dkong_sound Digtal_sound
 	.ROM_D(ROM_D)
 );
 
-dkong_wav_sound Analog_sound
-(
-	.O_ROM_AB(WAV_ROM_A),
-	.I_ROM_DB(WAV_ROM_DO),
+//----    DAC  I/F     ------------------------
 
+localparam SAMPLE_RATE = 48000;
+localparam [9:0] clocks_per_sample = 10'(W_CLK_24576M_RATE / SAMPLE_RATE);
+
+wire signed[15:0] W_D_S_DATB;
+
+dkongjr_dac dac08
+(
 	.I_CLK(W_CLK_24576M),
-	.I_RSTn(W_RESETn),
-	.I_SW(I_DKJR ? 2'b00 : W_6H_Q[2:1])
+	.I_DECAY_EN(~I8035_PBI[7]),
+	.I_RESET_n(W_RESETn),
+	.I_SND_DAT({2{~W_D_S_DAT[7],W_D_S_DAT[6:0]}}), // convert 8-bit unsigned to 16-bit signed.
+	.O_SND_DAT(W_D_S_DATB)
 );
 
-reg[8:0] audio_clk_counter;
-wire audio_clk_en;
-assign audio_clk_en = audio_clk_counter == 0;
-wire signed[15:0] walk_out;
+// Second order low pass filter. f= 1916 Hz, Q = 0.74.
+wire signed[15:0] W_D_S_DATC;
+iir_2nd_order filter
+(
+	.clk(W_CLK_24576M),
+	.reset(~W_RESETn),
+	.div(clocks_per_sample),
+	.A2(-18'sd26649),
+	.A3(18'sd11453),
+	.B1(18'sd215),
+	.B2(18'sd430),
+	.B3(18'sd215),
+   .in(W_D_S_DATB),
+	.out(W_D_S_DATC)
+);
 
+// Wav sound recored at 11025 Hz rate, 8 bit unsigned
+dkong_wav_sound #(
+	.CLOCK_RATE(W_CLK_24576M_RATE)
+) Analog_sound (
+	.I_CLK(W_CLK_24576M),
+	.I_RSTn(W_RESETn),
+	.I_SW(I_DKJR ? 3'b00 : {W_6H_Q[2:1],W_6H_Q[0] | use_emulated_sfx}),
+	.O_ROM_AB(WAV_ROM_A)
+);
+
+reg[9:0] audio_clk_counter;
+reg audio_clk_en;
 always@(posedge W_CLK_24576M, negedge W_RESETn) begin
 	if(!W_RESETn)begin
+		audio_clk_en <= 0;
 		audio_clk_counter <= 0;
 	end else begin
-		audio_clk_counter <= audio_clk_counter + 1;
+		if(audio_clk_counter != (clocks_per_sample - 1'd1)) begin
+			audio_clk_en <= 0;
+			audio_clk_counter <= audio_clk_counter + 1'd1;
+		end else begin
+			audio_clk_en <= 1;
+			audio_clk_counter <= 0;
+		end
 	end
 end
 
-dk_walk #(.CLOCK_RATE(24576000),.SAMPLE_RATE(48000)) walk (
+wire signed[15:0] walk_out;
+dk_walk #(
+	.CLOCK_RATE(W_CLK_24576M_RATE),
+	.SAMPLE_RATE(SAMPLE_RATE)
+) walk (
 	.clk(W_CLK_24576M),
 	.I_RSTn(W_RESETn),
 	.audio_clk_en(audio_clk_en),
-	.walk_en(~W_6H_Q[0]),
+	.walk_en(~W_6H_Q[0] & use_emulated_sfx),
 	.out(walk_out)
 );
 
 //  SOUND MIXER (WAV + DIG ) -----------------------
-wire[14:0] sound_mix = ({1'b0, I_DKJR ? 15'd0 : WAV_ROM_DO, 6'b0} + {1'b0, (W_D_S_DAT >> 1) + (W_D_S_DAT >> 3), 6'b0});
-wire signed[15:0] sound_mix_16_bit = sound_mix - 2**14 + walk_out;
 
-assign O_SOUND_DAT = sound_mix_16_bit + 2**15;
+wire signed[16:0] sound_mix =
+	(I_DKJR ? 17'd0 : {{4{~WAV_ROM_DO[7]}}, WAV_ROM_DO[6:0],6'b0}) +
+	{{4{W_D_S_DATC[15]}},W_D_S_DATC[14:2]} + {{6{W_D_S_DATC[15]}},W_D_S_DATC[14:4]} +
+	{{2{walk_out[15]}},walk_out[14:0]};
+
+
+always@(posedge W_CLK_24576M) begin
+	O_SOUND_DAT <=
+		sound_mix[16:15] == 2'b01 ? 16'h7FFF :
+		sound_mix[16:15] == 2'b10 ? 16'h8000 :
+		sound_mix[15:0];
+end
 
 endmodule

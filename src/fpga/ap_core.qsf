@@ -745,11 +745,13 @@ set_global_assignment -name VERILOG_FILE core/rtl/pause.v
 set_global_assignment -name VERILOG_FILE core/rtl/i8035ip.v
 set_global_assignment -name VERILOG_FILE core/rtl/hiscore.v
 set_global_assignment -name VHDL_FILE core/rtl/dpram.vhd
-set_global_assignment -name VERILOG_FILE core/rtl/dkong_wav_sound.v
+set_global_assignment -name SYSTEMVERILOG_FILE core/rtl/dkong_wav_sound.sv
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_vram.v
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_top.v
 set_global_assignment -name SYSTEMVERILOG_FILE core/rtl/dkong_soundboard.sv
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_sound.v
+set_global_assignment -name SYSTEMVERILOG_FILE core/rtl/dkongjr_dac.sv
+set_global_assignment -name VERILOG_FILE core/rtl/dkongjr_iir_filter.v
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_obj.v
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_logic.v
 set_global_assignment -name VERILOG_FILE core/rtl/dkong_hv_count.v

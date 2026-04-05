@@ -18,11 +18,11 @@ module rate_of_change_limiter #(
             out <= 0;
         end else if(audio_clk_en) begin
             if(difference < -MAX_CHANGE_PER_SAMPLE)begin
-                out <= out - MAX_CHANGE_PER_SAMPLE;
+                out <= out - 16'(MAX_CHANGE_PER_SAMPLE);
             end else if(difference > MAX_CHANGE_PER_SAMPLE) begin
-                out <= out + MAX_CHANGE_PER_SAMPLE;
+                out <= out + 16'(MAX_CHANGE_PER_SAMPLE);
             end else begin
-                out <= in; 
+                out <= in;
             end
         end
     end

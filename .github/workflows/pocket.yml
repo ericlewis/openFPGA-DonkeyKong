@@ -1,0 +1,99 @@
+name: Build Donkey Kong Core
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/fpga/**'
+      - 'dist/**'
+      - '.github/workflows/pocket.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/share/boost /opt/hostedtoolcache
+          sudo apt-get clean
+          docker system prune -af
+          df -h /
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Pocket core
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/build" \
+            -w /build/src/fpga \
+            raetro/quartus:pocket \
+            quartus_sh --flow compile ap_core
+
+      - name: Reverse Pocket bitstream
+        run: |
+          sudo chown -R runner:runner src/fpga/output_files/
+          python3 src/fpga/reverse_bitstream.py \
+            src/fpga/output_files/ap_core.rbf \
+            src/fpga/output_files/bitstream.rbf_r
+
+      - name: Package release tree
+        run: |
+          mkdir -p release
+          cp -R dist/. release/
+          cp src/fpga/output_files/bitstream.rbf_r release/Cores/ericlewis.DonkeyKong/bitstream.rbf_r
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ericlewis.DonkeyKong-pocket
+          path: release/
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ericlewis.DonkeyKong-pocket
+          path: release/
+
+      - name: Archive release payload
+        run: |
+          cd release
+          zip -r ../ericlewis.DonkeyKong-pocket.zip .
+
+      - name: Publish nightly release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=nightly
+          TITLE="Nightly build"
+          NOTES="Automated build from ${GITHUB_SHA}."
+
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG" --force
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes "$NOTES" --prerelease
+            gh release upload "$TAG" ericlewis.DonkeyKong-pocket.zip --clobber
+          else
+            gh release create "$TAG" ericlewis.DonkeyKong-pocket.zip \
+              --title "$TITLE" \
+              --notes "$NOTES" \
+              --prerelease
+          fi

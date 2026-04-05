@@ -9,13 +9,13 @@
     "data_slots": [
       {
         "id": 1,
-        "filename": "dkongp.rom"
+        "filename": "radarscp.rom"
       }
     ],
     "memory_writes": [
       {
         "address": "0xf9000000",
-        "data": "0x0"
+        "data": "0x3"
       }
     ]
   }

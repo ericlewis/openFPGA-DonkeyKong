@@ -1,13 +1,13 @@
 # Donkey Kong
 
-Analogue Pocket port of Donkey Kong.
+Analogue Pocket port of Donkey Kong, refreshed against the current [MiSTer-devel/Arcade-DonkeyKong_MiSTer](https://github.com/MiSTer-devel/Arcade-DonkeyKong_MiSTer) core and wrapper behavior where applicable.
 
-## Known Issues
+## Status
 
-* High Score saving doesn't work.
-* No dips.
-* Doesn't support Pest Place or Radar Scope.
-* Or Donkey Kong, Jr.
+* High score save support is wired through the APF nonvolatile slot.
+* DIP-style game settings are exposed in Core Settings.
+* Packaged asset presets include standard Donkey Kong sets, Donkey Kong Junior, Foundry/Pest Place, and Radar Scope mode selection.
+* Radar Scope still requires you to provide a matching `radarscp.rom` image yourself.
 
 ## Attribution
 
@@ -27,4 +27,10 @@ Analogue Pocket port of Donkey Kong.
 
 ## ROM Instructions
 
-ROM files are not included, you must use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to convert to a singular `dkong.rom` file, then place the ROM file in `/Assets/donkeykong/common`.
+ROM files are not included. Use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to build the required ROM images, then place them in `/Assets/donkeykong/common`.
+
+Examples:
+
+* `dkong.rom` for standard Donkey Kong sets and most hacks
+* `dkongjr.rom` for Donkey Kong Junior
+* `dkongf.rom` or `dkongex.rom` variants can be mapped through the packaged Foundry/Pest Place asset presets if you generate matching ROM names

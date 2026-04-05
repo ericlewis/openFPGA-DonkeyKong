@@ -432,6 +432,78 @@ core_bridge_cmd icb (
 
 );
 
+wire    clk_core_6_1436;
+wire    clk_core_6_1436_90deg;
+wire    clk_sys;
+wire    pll_core_locked;
+
+///////////////////////////////////////////////
+// Settings
+///////////////////////////////////////////////
+
+reg [2:0] cfg_mod_74a = 3'd0;
+reg [1:0] cfg_lives_74a = 2'd0;
+reg [1:0] cfg_bonus_74a = 2'd0;
+reg [2:0] cfg_coins_74a = 3'd0;
+reg       cfg_cabinet_74a = 1'b1;
+reg       cfg_flip_screen_74a = 1'b0;
+reg       cfg_emulated_sfx_74a = 1'b0;
+reg       cfg_autosave_hs_74a = 1'b1;
+reg       cfg_pause_in_osd_74a = 1'b1;
+reg       cfg_dim_video_74a = 1'b1;
+
+wire [15:0] cfg_bus_74a = {
+    3'b000,
+    cfg_dim_video_74a,
+    cfg_pause_in_osd_74a,
+    cfg_autosave_hs_74a,
+    cfg_emulated_sfx_74a,
+    cfg_flip_screen_74a,
+    cfg_cabinet_74a,
+    cfg_coins_74a,
+    cfg_bonus_74a,
+    cfg_lives_74a,
+    cfg_mod_74a
+};
+wire [15:0] cfg_bus_sys;
+
+always @(posedge clk_74a) begin
+    if (bridge_wr) begin
+        casex (bridge_addr)
+            32'hF9000000: cfg_mod_74a <= bridge_wr_data[2:0];
+            32'h50000000: cfg_lives_74a <= bridge_wr_data[1:0];
+            32'h50000004: cfg_bonus_74a <= bridge_wr_data[1:0];
+            32'h50000008: cfg_coins_74a <= bridge_wr_data[2:0];
+            32'h5000000C: cfg_cabinet_74a <= bridge_wr_data[0];
+            32'h50000010: cfg_flip_screen_74a <= bridge_wr_data[0];
+            32'h50000014: cfg_emulated_sfx_74a <= bridge_wr_data[0];
+            32'h50000018: cfg_autosave_hs_74a <= bridge_wr_data[0];
+            32'h5000001C: cfg_pause_in_osd_74a <= bridge_wr_data[0];
+            32'h50000020: cfg_dim_video_74a <= bridge_wr_data[0];
+        endcase
+    end
+end
+
+synch_2 #(
+    .WIDTH(16)
+) cfg_sync (
+    cfg_bus_74a,
+    cfg_bus_sys,
+    clk_sys
+);
+
+wire [2:0] cfg_mod = cfg_bus_sys[2:0];
+wire [1:0] cfg_lives = cfg_bus_sys[4:3];
+wire [1:0] cfg_bonus = cfg_bus_sys[6:5];
+wire [2:0] cfg_coins = cfg_bus_sys[9:7];
+wire       cfg_cabinet = cfg_bus_sys[10];
+wire       cfg_flip_screen = cfg_bus_sys[11];
+wire       cfg_emulated_sfx = cfg_bus_sys[12];
+wire       cfg_autosave_hs = cfg_bus_sys[13];
+wire       cfg_pause_in_osd = cfg_bus_sys[14];
+wire       cfg_dim_video = cfg_bus_sys[15];
+wire [7:0] cfg_dip_sw = {cfg_cabinet, cfg_coins, cfg_bonus, cfg_lives};
+
 ///////////////////////////////////////////////
 // System
 ///////////////////////////////////////////////
@@ -499,7 +571,14 @@ wire        hs_configured;
 pause #(4,4,4,25) pause (
   .clk_sys(clk_sys),
   .reset(~reset_n),
+  .user_button(m_pause),
+  .pause_request(hs_pause),
+  .options({cfg_dim_video, cfg_pause_in_osd}),
   .OSD_STATUS(osnotify_inmenu_s),
+  .r(r),
+  .g(g),
+  .b(b),
+  .rgb_out(rgb_out),
   .pause_cpu(pause_cpu)
 );
 
@@ -512,7 +591,7 @@ hiscore #(
 	.clk(clk_sys),
 	.paused(pause_cpu),
     .reset(~reset_n),
-	.autosave(1),
+	.autosave(cfg_autosave_hs),
 
     .ioctl_upload(sd_rd),
     .ioctl_upload_req(),
@@ -608,6 +687,7 @@ end
 wire hblank_core, vblank_core;
 wire hs_core_n, vs_core_n;
 wire [3:0] r, g, b;
+wire [11:0] rgb_out;
 
 reg video_de_reg;
 reg video_hs_reg;
@@ -631,9 +711,9 @@ always @(posedge clk_core_6_1436) begin
 
     if (~(vblank_core || hblank_core)) begin
         video_de_reg <= 1;
-        video_rgb_reg[23:16] <= {2{r}};
-        video_rgb_reg[15:8]  <= {2{g}};
-        video_rgb_reg[7:0]   <= {2{b}};
+        video_rgb_reg[23:16] <= {2{rgb_out[11:8]}};
+        video_rgb_reg[15:8]  <= {2{rgb_out[7:4]}};
+        video_rgb_reg[7:0]   <= {2{rgb_out[3:0]}};
     end
 
     video_hs_reg <= ~hs_prev && ~hs_core_n;
@@ -659,17 +739,17 @@ end
 // Audio
 ///////////////////////////////////////////////
 
-wire [15:0] audio;
+wire signed [15:0] audio;
 
 sound_i2s #(
-    .CHANNEL_WIDTH(15),
-    .SIGNED_INPUT (0)
+    .CHANNEL_WIDTH(16),
+    .SIGNED_INPUT (1)
 ) sound_i2s (
     .clk_74a(clk_74a),
     .clk_audio(clk_sys),
     
-    .audio_l(audio[15:1]),
-    .audio_r(audio[15:1]),
+    .audio_l(audio),
+    .audio_r(audio),
 
     .audio_mclk(audio_mclk),
     .audio_lrck(audio_lrck),
@@ -712,7 +792,7 @@ wire m_right  = joy[3];
 wire m_fire   = joy[4];
 
 wire m_start1 =  joy[15];
-wire m_start2 =  joy2[15];
+wire m_start2 =  joy[6] | joy2[6] | joy2[15];
 wire m_coin   =  joy[14] | joy2[14];
 wire m_pause   = joy[8] | joy2[8];
 
@@ -727,6 +807,14 @@ reg mod_dkjr = 0;
 reg mod_dk3 = 0;
 reg mod_radarscope = 0;
 reg mod_pestplace = 0;
+
+always @(posedge clk_sys) begin
+    mod_dk <= (cfg_mod == 3'd0);
+    mod_dkjr <= (cfg_mod == 3'd1);
+    mod_dk3 <= (cfg_mod == 3'd2);
+    mod_radarscope <= (cfg_mod == 3'd3);
+    mod_pestplace <= (cfg_mod == 3'd4);
+end
 
 wire reset = ~reset_n | ioctl_download;
 
@@ -789,7 +877,7 @@ dkong_top dkong(
     .I_S2(~m_start2),
     .I_C1(~m_coin),
 
-    .I_DIP_SW(0),
+    .I_DIP_SW(cfg_dip_sw),
 
     .I_DKJR(mod_dkjr|mod_pestplace|mod_dk3),
     .I_DK3B(mod_dk3),
@@ -798,9 +886,10 @@ dkong_top dkong(
 
     .O_PIX(clk_pix),
 
-    .flip_screen(0),
-    .H_OFFSET(0),
-    .V_OFFSET(0),
+    .flip_screen(cfg_flip_screen),
+    .use_emulated_sfx(cfg_emulated_sfx),
+    .H_OFFSET(9'd0),
+    .V_OFFSET(9'd0),
 
     .O_SOUND_DAT(audio),
     .O_VGA_R(r),
@@ -833,12 +922,6 @@ dkong_top dkong(
 ///////////////////////////////////////////////
 // Clocks
 ///////////////////////////////////////////////
-
-wire    clk_core_6_1436;
-wire    clk_core_6_1436_90deg;
-wire    clk_sys;
-
-wire    pll_core_locked;
     
 mf_pllbase mp1 (
     .refclk         ( clk_74a ),

@@ -1,8 +1,8 @@
 /********************************************************************************\
- * 
+ *
  *  MiSTer Discrete example circuit - dk walk
  *
- *  Copyright 2022 by Jegor van Opdorp. 
+ *  Copyright 2022 by Jegor van Opdorp.
  *  This program is free software under the terms of the GPLv3, see LICENCSE.txt
  *
  ********************************************************************************/
@@ -22,7 +22,7 @@ module dk_walk #(
 
     wire signed[15:0] walk_en_5volts;
     wire signed[15:0] walk_en_5volts_filtered;
-    assign walk_en_5volts =  walk_en ? 0 : 'd6826; // 2^14 * 5/12 = 6826 , for 5 volts
+    assign walk_en_5volts =  walk_en ? '0 : 16'd6826; // 2^14 * 5/12 = 6826 , for 5 volts
 
     // filter to simulate transfer rate of invertors
     rate_of_change_limiter #(
@@ -36,7 +36,7 @@ module dk_walk #(
         .out(walk_en_5volts_filtered)
     );
 
-    assign mixer_input[0] = walk_en_5volts_filtered; 
+    assign mixer_input[0] = walk_en_5volts_filtered;
     assign mixer_input[1] = square_osc_out;
 
     localparam SAMPLE_RATE_SHIFT = 3;
@@ -110,8 +110,8 @@ module dk_walk #(
     );
 
     wire signed[15:0] walk_enveloped;
-    assign walk_enveloped = astable_555_out > 1000 ? walk_en_filtered : 0;
-    
+    assign walk_enveloped = astable_555_out > 1000 ? walk_en_filtered : 16'd0;
+
     wire signed[15:0] walk_enveloped_high_passed;
 
     resistor_capacitor_high_pass_filter #(
@@ -149,7 +149,7 @@ module dk_walk #(
             if(walk_enveloped_band_passed > 0) begin //TODO: hack to simulate diode connection coming from ground
                 out <= walk_enveloped_band_passed + (walk_enveloped_band_passed >>> 1);
             end else begin
-                out <= walk_enveloped_band_passed >>> 1 + (walk_enveloped_band_passed >>> 2);
+                out <= (walk_enveloped_band_passed >>> 1) + (walk_enveloped_band_passed >>> 2);
             end
         end
     end

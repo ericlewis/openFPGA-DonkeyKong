@@ -7,7 +7,7 @@
 //
 // Important !
 //
-// This program is freeware for non-commercial use. 
+// This program is freeware for non-commercial use.
 // An author does no guarantee about this program.
 // You can use this under your own risk.
 //
@@ -20,6 +20,23 @@
 // 2005- 2- 9 Data on the ROM are initialized at the time of the start.
 //            added device.
 //            changed module I/O.
+//
+// This description is largely based on the TKG4 schematics, with some extensions
+// to support Radarscope and Donkey Kong Jr (although MiSter currently has a separate DKJR core).
+//
+// In the schematics, ICs are denoted by their position on the board, i.e. IC 6M
+// is the IC in column 6, row M. Unfortunataly, this makes reverse lookup from
+// Verilog to schematic hard, but at least ICs with similar coordinates are often cloase
+// together in the schematic too.
+// In the Verilog description, signals were orignally named by the source IC and pin
+// name. Later changes did not always follow this convention.
+// This naming can be confusing, because is not always unique:
+// e.g. IC 4H occurs both on the VIDEO and CPU board.
+//
+// Contrary to Radarscope and TGK2, the TKG4 does not really have a sound board,
+// so even in that code, numbering and naming of the TKG4 CPU board is largely
+// followed.
+//
 //================================================================================
 
 module dkong_top
@@ -42,6 +59,7 @@ module dkong_top
 
 	//    VGA (VIDEO) IF
 	input flip_screen,
+	input use_emulated_sfx,
 	input [8:0] H_OFFSET,
 	input [8:0] V_OFFSET,
 
@@ -111,7 +129,7 @@ wire   W_SW2_OEn ;
 wire   W_SW3_OEn ;
 wire   W_DIP_OEn ;
 
-wire   [2:0]W_4H_Q;
+wire   [1:0]W_4H_Q;
 wire   [7:0]W_5H_Q;
 wire   [7:0]W_6H_Q;
 wire   [4:0]W_3D_Q;
@@ -144,7 +162,7 @@ wire   W_CPU_IORQn;
 wire   W_CPU_MREQn;
 wire   W_CPU_BUSRQ;
 wire   W_CPU_BUSAKn;
-wire   W_CPU_RDn;  
+wire   W_CPU_RDn;
 wire   W_CPU_WRn;
 wire   [15:0]W_CPU_A;
 
@@ -153,7 +171,7 @@ assign WB_CLK_12288M = W_CLK_12288M; // 12.288MHz
 wire   W_CPU_CLK_EN_P = W_H_CNT[1:0] == 2'b01;
 wire   W_CPU_CLK_EN_N = W_H_CNT[1:0] == 2'b11;
 
- T80pa z80core(
+T80pa z80core(
 	.RESET_n(W_RESETn),
 	.CLK(I_CLK_24576M),
 	.CEN_p(W_CPU_CLK_EN_N),
@@ -195,7 +213,7 @@ prog ROM(
 
 always @(*) begin
 	case({!I_DKJR, W_CPU_A[15:11]})
-		6'h02: MAIN_CPU_A = {5'h06,W_CPU_A[10:0]}; // 0x1000-0x17FF -> 0x3000-0x37FF in ROM file 
+		6'h02: MAIN_CPU_A = {5'h06,W_CPU_A[10:0]}; // 0x1000-0x17FF -> 0x3000-0x37FF in ROM file
 		6'h03: MAIN_CPU_A = {5'h0B,W_CPU_A[10:0]}; // 0x1800-0x1FFF -> 0x5800-0x5FFF in ROM file
 		6'h05: MAIN_CPU_A = {5'h09,W_CPU_A[10:0]}; // 0x2800-0x2FFF -> 0x4800-0x4FFF in ROM file
 		6'h06: MAIN_CPU_A = {5'h02,W_CPU_A[10:0]}; // 0x3000-0x37FF -> 0x1000-0x17FF in ROM file
@@ -370,7 +388,7 @@ dkong_adec adec
 	.I_DK3B(I_DK3B),
 	.I_PESTPLCE(I_PESTPLCE),
 	.I_AB(W_CPU_A),
-	.I_DB(WI_D), 
+	.I_DB(WI_D),
 	.I_MREQ_n(W_CPU_MREQn),
 	.I_RFSH_n(W_CPU_RFSHn),
 	.I_RD_n(W_CPU_RDn),
@@ -497,7 +515,7 @@ dkong_vram vram
 	.DL_ADDR(DL_ADDR),
 	.DL_WR(DL_WR),
 	.DL_DATA(DL_DATA),
-	
+
 	.hs_address(hs_address),
 	.hs_data_in(hs_data_in),
 	.hs_data_out(hs_data_out_VRAM),
@@ -567,6 +585,7 @@ dkong_col_pal cpal
 dkong_soundboard dkong_soundboard(
 	.W_CLK_24576M(W_CLK_24576M & ~paused),
 	.W_RESETn(W_RESETn),
+	.use_emulated_sfx(use_emulated_sfx),
 	.I_DKJR(I_DKJR),
 	.O_SOUND_DAT(O_SOUND_DAT),
 	.O_SACK(W_SACK),
@@ -579,5 +598,5 @@ dkong_soundboard dkong_soundboard(
 	.WAV_ROM_A(WAV_ROM_A),
 	.WAV_ROM_DO(WAV_ROM_DO)
 	);
-	
+
 endmodule

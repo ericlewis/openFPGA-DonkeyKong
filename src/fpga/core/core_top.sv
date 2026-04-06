@@ -314,6 +314,36 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
+    32'hF9000000: begin
+        bridge_rd_data <= {29'd0, cfg_mod_74a};
+    end
+    32'h50000000: begin
+        bridge_rd_data <= {30'd0, cfg_lives_74a};
+    end
+    32'h50000004: begin
+        bridge_rd_data <= {30'd0, cfg_bonus_74a};
+    end
+    32'h50000008: begin
+        bridge_rd_data <= {29'd0, cfg_coins_74a};
+    end
+    32'h5000000C: begin
+        bridge_rd_data <= {31'd0, cfg_cabinet_74a};
+    end
+    32'h50000010: begin
+        bridge_rd_data <= {31'd0, cfg_flip_screen_74a};
+    end
+    32'h50000014: begin
+        bridge_rd_data <= {31'd0, cfg_emulated_sfx_74a};
+    end
+    32'h50000018: begin
+        bridge_rd_data <= {31'd0, cfg_autosave_hs_74a};
+    end
+    32'h5000001C: begin
+        bridge_rd_data <= {31'd0, cfg_pause_in_osd_74a};
+    end
+    32'h50000020: begin
+        bridge_rd_data <= {31'd0, cfg_dim_video_74a};
+    end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end

@@ -128,6 +128,19 @@
         ],
         "enabled": true,
         "persist": true
+      },
+      {
+        "id": "0x09",
+        "name": "Display Rotation",
+        "type": "list",
+        "address": "0x50000024",
+        "defaultval": "0x00",
+        "options": [
+          { "value": "0x00", "name": "Clockwise" },
+          { "value": "0x01", "name": "Counterclockwise" }
+        ],
+        "enabled": true,
+        "persist": true
       }
     ],
     "messages": []

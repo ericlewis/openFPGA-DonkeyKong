@@ -344,6 +344,9 @@ always @(*) begin
     32'h50000020: begin
         bridge_rd_data <= {31'd0, cfg_dim_video_74a};
     end
+    32'h50000024: begin
+        bridge_rd_data <= {31'd0, cfg_rotate_display_74a};
+    end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
@@ -481,8 +484,10 @@ reg       cfg_emulated_sfx_74a = 1'b0;
 reg       cfg_autosave_hs_74a = 1'b1;
 reg       cfg_pause_in_osd_74a = 1'b1;
 reg       cfg_dim_video_74a = 1'b1;
+reg       cfg_rotate_display_74a = 1'b0;
 
-wire [15:0] cfg_bus_74a = {
+wire [16:0] cfg_bus_74a = {
+    cfg_rotate_display_74a,
     3'b000,
     cfg_dim_video_74a,
     cfg_pause_in_osd_74a,
@@ -495,7 +500,7 @@ wire [15:0] cfg_bus_74a = {
     cfg_lives_74a,
     cfg_mod_74a
 };
-wire [15:0] cfg_bus_sys;
+wire [16:0] cfg_bus_sys;
 
 always @(posedge clk_74a) begin
     if (bridge_wr) begin
@@ -510,12 +515,13 @@ always @(posedge clk_74a) begin
             32'h50000018: cfg_autosave_hs_74a <= bridge_wr_data[0];
             32'h5000001C: cfg_pause_in_osd_74a <= bridge_wr_data[0];
             32'h50000020: cfg_dim_video_74a <= bridge_wr_data[0];
+            32'h50000024: cfg_rotate_display_74a <= bridge_wr_data[0];
         endcase
     end
 end
 
 synch_2 #(
-    .WIDTH(16)
+    .WIDTH(17)
 ) cfg_sync (
     cfg_bus_74a,
     cfg_bus_sys,
@@ -532,6 +538,7 @@ wire       cfg_emulated_sfx = cfg_bus_sys[12];
 wire       cfg_autosave_hs = cfg_bus_sys[13];
 wire       cfg_pause_in_osd = cfg_bus_sys[14];
 wire       cfg_dim_video = cfg_bus_sys[15];
+wire       cfg_rotate_display = cfg_bus_sys[16];
 wire [7:0] cfg_dip_sw = {cfg_cabinet, cfg_coins, cfg_bonus, cfg_lives};
 
 ///////////////////////////////////////////////
@@ -726,6 +733,8 @@ reg [23:0] video_rgb_reg;
 
 reg hs_prev;
 reg vs_prev;
+wire [2:0] scaler_slot = cfg_rotate_display ? 3'd1 : 3'd0;
+wire [23:0] video_blank_rgb = {8'd0, scaler_slot, 10'd0, 3'd0};
 
 assign video_rgb_clock = clk_core_6_1436;
 assign video_rgb_clock_90 = clk_core_6_1436_90deg;
@@ -738,6 +747,7 @@ assign video_skip = 0;
 
 always @(posedge clk_core_6_1436) begin
     video_de_reg <= 0;
+    video_rgb_reg <= video_blank_rgb;
 
     if (~(vblank_core || hblank_core)) begin
         video_de_reg <= 1;

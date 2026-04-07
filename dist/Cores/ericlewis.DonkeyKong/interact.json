@@ -53,32 +53,6 @@
       },
       {
         "id": "0x03",
-        "name": "Cabinet",
-        "type": "list",
-        "address": "0x5000000C",
-        "defaultval": "0x01",
-        "options": [
-          { "value": "0x00", "name": "Cocktail" },
-          { "value": "0x01", "name": "Upright" }
-        ],
-        "enabled": true,
-        "persist": true
-      },
-      {
-        "id": "0x04",
-        "name": "Flip Screen",
-        "type": "list",
-        "address": "0x50000010",
-        "defaultval": "0x00",
-        "options": [
-          { "value": "0x00", "name": "Off" },
-          { "value": "0x01", "name": "On" }
-        ],
-        "enabled": true,
-        "persist": true
-      },
-      {
-        "id": "0x05",
         "name": "Sound Effects",
         "type": "list",
         "address": "0x50000014",
@@ -91,54 +65,53 @@
         "persist": true
       },
       {
-        "id": "0x06",
-        "name": "Autosave HiScores",
+        "id": "0x04",
+        "name": "Cabinet",
         "type": "list",
-        "address": "0x50000018",
+        "address": "0x5000000C",
         "defaultval": "0x01",
         "options": [
-          { "value": "0x00", "name": "Off" },
-          { "value": "0x01", "name": "On" }
+          { "value": "0x00", "name": "Cocktail" },
+          { "value": "0x01", "name": "Upright" }
         ],
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x05",
+        "name": "Flip Screen",
+        "type": "check",
+        "address": "0x50000010",
+        "defaultval": "0x00",
+        "value": "0x01",
+        "value_off": "0x00",
+        "enabled": true,
+        "persist": true
+      },
+      {
+        "id": "0x06",
+        "name": "Autosave HiScores",
+        "type": "checkbox",
+        "address": "0x50000018",
+        "defaultval": "0x01",
         "enabled": true,
         "persist": true
       },
       {
         "id": "0x07",
         "name": "Pause In OSD",
-        "type": "list",
+        "type": "checkbox",
         "address": "0x5000001C",
         "defaultval": "0x01",
-        "options": [
-          { "value": "0x00", "name": "Off" },
-          { "value": "0x01", "name": "On" }
-        ],
         "enabled": true,
         "persist": true
       },
       {
         "id": "0x08",
         "name": "Dim Video",
-        "type": "list",
+        "type": "checkbox",
         "address": "0x50000020",
         "defaultval": "0x01",
-        "options": [
-          { "value": "0x00", "name": "Off" },
-          { "value": "0x01", "name": "On" }
-        ],
-        "enabled": true,
-        "persist": true
-      },
-      {
-        "id": "0x09",
-        "name": "Display Rotation",
-        "type": "list",
-        "address": "0x50000024",
-        "defaultval": "0x00",
-        "options": [
-          { "value": "0x00", "name": "Clockwise" },
-          { "value": "0x01", "name": "Counterclockwise" }
-        ],
         "enabled": true,
         "persist": true
       }
